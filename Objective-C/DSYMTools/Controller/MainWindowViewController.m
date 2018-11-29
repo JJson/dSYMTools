@@ -80,7 +80,7 @@
     self.archiveFilesTableView.doubleAction = @selector(doubleActionMethod);
 
     NSArray *archiveFilePaths = [self allDSYMFilePath];
-    [self handleArchiveFileWithPath:archiveFilePaths];
+    [self handleArchiveFileWithPath:archiveFilePaths isFromDsymFile:NO];
 }
 
 /**
@@ -88,7 +88,7 @@
  *
  *  @param filePaths archvie 文件路径
  */
-- (void)handleArchiveFileWithPath:(NSArray *)filePaths {
+- (void)handleArchiveFileWithPath:(NSArray *)filePaths isFromDsymFile:(BOOL)isFromDsymFile{
     _archiveFilesInfo = [NSMutableArray arrayWithCapacity:1];
     for(NSString *filePath in filePaths){
         ArchiveInfo *archiveInfo = [[ArchiveInfo alloc] init];
@@ -100,7 +100,7 @@
             archiveInfo.archiveFileName = fileName;
             archiveInfo.archiveFileType = ArchiveFileTypeXCARCHIVE;
             [self formatArchiveInfo:archiveInfo];
-        }else if([fileName hasSuffix:@".app.dSYM"]){
+        }else if([fileName hasSuffix:isFromDsymFile ? @".dSYM":@".app.dSYM"]){
             archiveInfo.dSYMFilePath = filePath;
             archiveInfo.dSYMFileName = fileName;
             archiveInfo.archiveFileType = ArchiveFileTypeDSYM;
@@ -423,6 +423,7 @@
     if([[pboard types] containsObject:NSFilenamesPboardType]){
         NSArray *files = [pboard propertyListForType:NSFilenamesPboardType];
         NSMutableArray *archiveFilePaths = [NSMutableArray arrayWithCapacity:1];
+        BOOL isFromDsymFile = NO;
         for(NSString *filePath in files){
             if([filePath.pathExtension isEqualToString:@"xcarchive"]){
                 NSLog(@"%@", filePath);
@@ -430,6 +431,7 @@
             }
 
             if([filePath.pathExtension isEqualToString:@"dSYM"]){
+                isFromDsymFile = YES;
                 [archiveFilePaths addObject:filePath];
             }
         }
@@ -441,7 +443,7 @@
         
         [self resetPreInformation];
 
-        [self handleArchiveFileWithPath:archiveFilePaths];
+        [self handleArchiveFileWithPath:archiveFilePaths isFromDsymFile:isFromDsymFile];
 
         
     }
